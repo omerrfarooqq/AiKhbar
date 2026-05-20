@@ -1,0 +1,316 @@
+\documentclass[11pt,a4paper]{article}
+
+% ----------------------------- Packages -----------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+
+% ----------------------------- Styling ------------------------------
+\definecolor{gold}{RGB}{184,144,47}
+\definecolor{ink}{RGB}{20,24,38}
+\definecolor{codebg}{RGB}{245,245,248}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ink,
+  urlcolor=gold,
+  citecolor=ink
+}
+
+\titleformat{\section}{\Large\bfseries\color{ink}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{ink}}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{AiKhbar}
+\lhead{Urdu AI News Intelligence Platform}
+\cfoot{\thepage}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{gray!40},
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible
+}
+
+% ----------------------------- Title --------------------------------
+\title{\textbf{AiKhbar}\\[0.3em]
+\large An Urdu AI-Powered News Intelligence and Audio Briefing Platform}
+\author{Project Report}
+\date{\today}
+
+% ====================================================================
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+\noindent
+AiKhbar is a full-stack artificial-intelligence system for the Urdu-language
+news domain. Rather than a conventional news reader, it is designed as an
+\emph{AI media intelligence platform}: it automatically aggregates news from
+multiple Pakistani sources, classifies and clusters stories, produces unified
+multi-document summaries, synthesises natural Urdu audio briefings, aggregates
+public and political opinion through Retrieval-Augmented Generation (RAG),
+reconstructs the historical context of major events, and supports a
+conversational interface for exploring the news. This report describes the
+system's objectives, architecture, AI pipelines, data model, implementation
+and evaluation, and outlines a roadmap toward production scale.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ====================================================================
+\section{Introduction}
+
+\subsection{Motivation}
+Consumers of Urdu-language news face three persistent problems: information
+\emph{overload} from many overlapping sources, a lack of \emph{synthesis}
+across outlets reporting the same event, and limited \emph{accessibility} for
+users who prefer listening over reading. Existing aggregators present raw
+headlines but do little to summarise, contextualise, or analyse coverage.
+
+\subsection{Objectives}
+AiKhbar addresses these problems with the following goals:
+\begin{itemize}[noitemsep]
+  \item Aggregate real-time Urdu news automatically from multiple sources.
+  \item Classify articles into seven categories and cluster articles that
+        describe the same story.
+  \item Generate concise, faithful Urdu summaries at multiple depths.
+  \item Convert summaries into natural Urdu audio briefings.
+  \item Aggregate diverse opinions and reconstruct historical timelines.
+  \item Provide a conversational, RAG-grounded news assistant.
+  \item Deliver a personalised one-click daily brief.
+\end{itemize}
+
+\subsection{Scope}
+The work delivers a complete Minimum Viable Product (MVP): an asynchronous
+FastAPI backend, a React frontend, AI pipelines built on a hosted large
+language model (LLM), a vector database for retrieval, and full deployment
+tooling. Production hardening (authentication, distributed task processing) is
+identified as future work.
+
+% ====================================================================
+\section{Literature and Background}
+
+\subsection{Large Language Models for News}
+Modern instruction-tuned LLMs perform abstractive summarisation, zero-shot
+classification and question answering without task-specific training. AiKhbar
+uses NVIDIA NIM, a hosted, OpenAI-API-compatible inference service, allowing
+open and commercial models to be accessed through a single client.
+
+\subsection{Retrieval-Augmented Generation}
+RAG combines a parametric LLM with a non-parametric retrieval store. Source
+documents are embedded into a vector space; at query time the most relevant
+passages are retrieved and supplied to the LLM as grounding context. This
+reduces hallucination and lets answers cite real sources --- essential for a
+news product.
+
+\subsection{Multilingual Embeddings}
+AiKhbar indexes Urdu articles but may retrieve English editorials. The
+\texttt{multilingual-e5-base} sentence-embedding model places both languages in
+a shared semantic space, enabling cross-lingual retrieval.
+
+% ====================================================================
+\section{System Architecture}
+
+\subsection{Design Principles}
+The system follows \textbf{clean architecture}: dependencies point inward, from
+the HTTP layer toward domain logic and infrastructure. Concretely:
+\begin{itemize}[noitemsep]
+  \item API routes are thin --- they validate input and delegate to services.
+  \item Each AI capability is an isolated, independently testable package.
+  \item All LLM calls pass through a single gateway module.
+  \item Prompt templates are centralised, separate from business logic.
+\end{itemize}
+
+\subsection{Layered Overview}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Layer} & \textbf{Package} & \textbf{Responsibility} \\
+\midrule
+HTTP          & \texttt{api/v1}, \texttt{websocket} & Routing, validation \\
+Orchestration & \texttt{services/} & Pipeline, daily brief, scheduler \\
+Domain        & \texttt{scraping}, \texttt{rag}, \texttt{tts}, etc. & AI pipelines \\
+Infrastructure& \texttt{db}, \texttt{models}, \texttt{core} & Persistence, config \\
+\bottomrule
+\end{tabular}
+\caption{The four architectural layers of AiKhbar.}
+\end{table}
+
+\subsection{Technology Stack}
+The backend uses Python~3.12 with FastAPI and asynchronous SQLAlchemy~2 over
+PostgreSQL. Background scheduling uses APScheduler. The frontend is a React~18
+single-page application built with Vite, styled with TailwindCSS, animated with
+Framer Motion, and managed with Redux Toolkit. AI components use NVIDIA NIM
+(LLM), SentenceTransformers (embeddings) and FAISS (vector index).
+
+% ====================================================================
+\section{AI Pipelines}
+
+\subsection{News Ingestion}
+The ingestion pipeline executes six stages with isolated error handling:
+\emph{scrape} (RSS parsing and full-text extraction), \emph{deduplicate}
+(exact matching on URL and a normalised content hash), \emph{classify},
+\emph{persist}, \emph{index} (into FAISS), and \emph{cluster}. A per-stage
+report records counts and errors so partial failures degrade gracefully.
+
+\subsection{Classification}
+Articles are classified into Politics, Sports, Economy, Crime, International,
+Technology and Entertainment. The MVP uses the LLM as a zero-shot classifier:
+it handles Urdu without training data and returns category, confidence, tags
+and region in a single structured call. The interface allows a fine-tuned
+transformer classifier to replace it later.
+
+\subsection{Story Clustering and Summarisation}
+Articles from different outlets covering the same event are grouped using
+agglomerative clustering with a cosine-distance threshold on headline-and-lead
+embeddings, performed per category to avoid cross-topic merges. Each cluster is
+summarised by the LLM into one \emph{unified} Urdu summary, available at four
+depths: short, detailed, a five-minute morning brief, and a fifteen-minute deep
+dive.
+
+\subsection{Retrieval-Augmented Generation}
+Article bodies are split into overlapping 220-word chunks, embedded, and stored
+in a FAISS \texttt{IndexFlatIP} index (inner product over normalised vectors
+yields cosine similarity). A single retriever serves three features:
+conversational chat, opinion aggregation and timeline reconstruction. Retrieved
+context is formatted and injected into the LLM prompt.
+
+\subsection{Opinion Aggregation and Timeline}
+For a story, the opinion aggregator retrieves a broad set of related passages
+and prompts the LLM to identify distinct perspectives --- public sentiment,
+pro-government, opposition, expert and international --- each with a stance and
+confidence. The timeline builder similarly reconstructs a chronological
+sequence of background events.
+
+\subsection{Media Analysis}
+The media-analysis engine assesses each article's tone, political leaning,
+sentiment polarity and propaganda indicators, persisting the result so the
+interface can present a media-bias badge.
+
+\subsection{Urdu Audio Generation}
+Summaries are converted into broadcast-style narration scripts with an
+introduction, headline emphasis and inter-story pauses. A provider abstraction
+selects the Urdu Orator API as primary and Coqui XTTS-v2 as an open-source
+fallback; synthesised audio is cached on disk keyed by content hash.
+
+\subsection{Personalisation}
+A deliberately simple and explainable model learns per-category affinity as a
+time-decayed, action-weighted sum of user interactions. The personalised feed
+ranks recent articles by a weighted combination of affinity and recency.
+
+% ====================================================================
+\section{Data Model}
+
+The relational schema centres on the \texttt{story\_clusters} entity. An
+\texttt{Article} belongs to at most one cluster; a cluster owns its
+\texttt{Summary}, \texttt{Opinion} and \texttt{TimelineEvent} records. A
+\texttt{User} has many \texttt{UserInteraction} records that drive
+personalisation. All tables carry creation and update timestamps. The complete
+schema is documented in \texttt{docs/DATABASE.md}.
+
+% ====================================================================
+\section{Implementation}
+
+\subsection{Backend}
+The backend exposes a versioned REST API plus WebSocket endpoints for live
+chat. CPU-bound work --- embedding, FAISS operations and local TTS inference
+--- is offloaded from the event loop with \texttt{asyncio.to\_thread}. Periodic
+ingestion is driven by APScheduler with overlap protection.
+
+\subsection{Frontend}
+The frontend implements a cinematic, editorial ``dark luxury'' aesthetic using
+glassmorphism, layered animated backgrounds and reusable motion components.
+Pages include a landing page, a filterable newsroom, a story detail view with
+on-demand opinion/timeline/audio enrichment, the daily brief, and a
+conversational chat interface.
+
+\subsection{Reliability}
+The system adopts a \emph{real-calls-only} policy: missing configuration (for
+example, an absent API key) raises an explicit error rather than silently
+degrading. External calls use exponential-backoff retries, and each pipeline
+stage isolates its failures.
+
+% ====================================================================
+\section{Evaluation}
+
+\subsection{Functional Verification}
+All backend modules compile and the core configuration, ORM models, schemas and
+scraping registry import successfully. The unit-test suite (text chunking,
+content hashing, narration assembly) passes. The frontend builds cleanly into
+an optimised production bundle.
+
+\subsection{Qualitative Assessment}
+The architecture achieves strong separation of concerns: the LLM provider, the
+vector index implementation and the TTS provider can each be replaced by
+editing a single module. The pipeline's per-stage error isolation makes the
+system resilient to upstream degradation.
+
+\subsection{Limitations}
+The MVP runs background work in-process rather than via a distributed queue;
+the FAISS flat index is exact but does not scale to very large corpora; and
+classification depends on LLM availability. Each limitation has a planned
+remedy in the roadmap.
+
+% ====================================================================
+\section{Future Work}
+
+Planned enhancements include: JWT authentication and rate limiting; migration
+to Celery and Redis for distributed task processing; an IVF/HNSW or managed
+vector index; token-streaming chat responses; a fine-tuned Urdu classifier;
+cross-lingual ingestion; and a mobile client. The full phased plan is given in
+\texttt{docs/ROADMAP.md}.
+
+% ====================================================================
+\section{Conclusion}
+
+AiKhbar demonstrates that a modular, clean-architecture design can integrate
+multiple AI capabilities --- aggregation, classification, summarisation,
+retrieval-augmented analysis, speech synthesis and personalisation --- into a
+coherent media-intelligence platform for an under-served language. The system
+is functional end to end, maintainable, and structured so that each component
+can evolve independently toward production scale.
+
+% ====================================================================
+\appendix
+\section{Key API Endpoints}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+\midrule
+GET  & \texttt{/api/v1/news} & List / filter articles \\
+POST & \texttt{/api/v1/news/scrape} & Trigger ingestion \\
+GET  & \texttt{/api/v1/stories/top} & Top story clusters \\
+POST & \texttt{/api/v1/stories/\{id\}/summary} & Unified summary \\
+POST & \texttt{/api/v1/stories/\{id\}/opinions} & RAG opinion aggregation \\
+POST & \texttt{/api/v1/briefs/daily} & One-click daily brief \\
+POST & \texttt{/api/v1/chat} & Conversational Q\&A \\
+POST & \texttt{/api/v1/tts/synthesize} & Urdu text-to-speech \\
+\bottomrule
+\end{tabular}
+\caption{Selected REST endpoints.}
+\end{table}
+
+\section{Repository}
+Source code: \url{https://github.com/omerrfarooqq/AiKhbar}
+
+\end{document}

@@ -1,0 +1,65 @@
+# AiKhbar — local / staging orchestration.
+# Brings up Postgres, Redis, the FastAPI backend and the Vite frontend.
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aikhbar-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aikhbar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aikhbar}
+      POSTGRES_DB: ${POSTGRES_DB:-aikhbar}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aikhbar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: aikhbar-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: aikhbar-backend
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/storage:/app/storage
+      - ./backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: aikhbar-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

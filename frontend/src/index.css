@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ink-950 text-slate-200 font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 15% -10%, rgba(212, 172, 77, 0.12), transparent 45%),
+      radial-gradient(circle at 90% 0%, rgba(91, 141, 239, 0.1), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  /* Urdu content renders right-to-left in the Nastaliq face. */
+  .urdu {
+    @apply font-urdu;
+    direction: rtl;
+    line-height: 2.4;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ink-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-700 rounded-full;
+  }
+}
+
+@layer components {
+  /* Reusable glassmorphism surface. */
+  .glass {
+    @apply bg-glass-gradient backdrop-blur-xl border border-white/10
+           shadow-glass rounded-2xl;
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300 hover:border-gold-500/40
+           hover:shadow-glow;
+  }
+
+  .gold-text {
+    @apply bg-gradient-to-r from-gold-300 via-gold-400 to-gold-500
+           bg-clip-text text-transparent;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl
+           bg-gradient-to-r from-gold-500 to-gold-600 px-6 py-3
+           font-semibold text-ink-950 transition-all duration-300
+           hover:shadow-glow hover:brightness-110 disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl
+           border border-white/15 px-5 py-2.5 font-medium text-slate-200
+           transition-all duration-300 hover:border-gold-500/40
+           hover:bg-white/5;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-white/10
+           bg-white/5 px-3 py-1 text-xs font-medium text-slate-300;
+  }
+}

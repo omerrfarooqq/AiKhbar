@@ -1,0 +1,9 @@
+# Normalise line endings — text files use LF in the repository.
+* text=auto eol=lf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.svg text eol=lf
+*.ico binary
+*.pdf binary

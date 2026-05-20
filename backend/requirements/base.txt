@@ -1,0 +1,43 @@
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+websockets==14.1
+
+# --- Database ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# --- Caching ---
+redis==5.2.1
+
+# --- Scheduling / async tasks ---
+apscheduler==3.11.0
+
+# --- HTTP / scraping ---
+httpx==0.28.1
+beautifulsoup4==4.12.3
+lxml==5.3.0
+feedparser==6.0.11
+trafilatura==2.0.0
+
+# --- AI / ML ---
+openai==1.59.6              # used as the NVIDIA NIM OpenAI-compatible client
+sentence-transformers==3.3.1
+faiss-cpu==1.9.0.post1
+numpy==2.2.1
+scikit-learn==1.6.0
+
+# --- TTS fallback ---
+# Coqui TTS is heavy; install only in environments that need the fallback.
+# TTS==0.22.0
+
+# --- Utilities ---
+python-dotenv==1.0.1
+tenacity==9.0.0
+loguru==0.7.3
+orjson==3.10.13
