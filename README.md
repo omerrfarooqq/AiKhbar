@@ -1,4 +1,4 @@
-# AiKhbar — اے آئی خبر
+# AiKhbar // اے آئی خبر
 
 > An Urdu AI-powered **news intelligence and audio briefing platform**.
 > Not just a news app — an AI media intelligence system.
