@@ -9,7 +9,7 @@ historical context, and lets users explore the news conversationally.
 
 ---
 
-## ✨ Features
+##  Features
 
 | # | Feature | Description |
 |---|---------|-------------|
@@ -26,7 +26,7 @@ historical context, and lets users explore the news conversationally.
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────┐   REST / WebSocket   ┌──────────────────────────────────┐
@@ -54,7 +54,7 @@ logic** — they delegate to services in `app/services`, `app/rag`,
 
 ---
 
-## 🧰 Tech Stack
+##  Tech Stack
 
 **Frontend** — React 18 · Vite 6 · TailwindCSS · Framer Motion · React Router 7
 · Redux Toolkit · Axios
@@ -71,7 +71,7 @@ httpx · BeautifulSoup · trafilatura · feedparser
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 AiKhbar/
@@ -113,7 +113,7 @@ AiKhbar/
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Python 3.11+ · Node.js 20+ · PostgreSQL 16
@@ -182,7 +182,7 @@ Full reference: [`docs/API.md`](docs/API.md).
 
 ---
 
-## 🧪 Testing
+##  Testing
 ```bash
 cd backend
 pytest                  # unit tests
@@ -191,7 +191,7 @@ ruff check .            # lint
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md). Highlights:
 - Celery + Redis for distributed task processing at scale
@@ -202,7 +202,7 @@ See [`docs/ROADMAP.md`](docs/ROADMAP.md). Highlights:
 
 ---
 
-## 📄 License
+##  License
 
 Released for academic and educational use. See the project report in
 [`report/`](report/) for the full academic write-up.
