@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessagesSquare } from 'lucide-react';
+import { Send, MessagesSquare, Wifi, WifiOff } from 'lucide-react';
 import SectionHeading from '../components/SectionHeading';
 import { newsService } from '../services/newsService';
+import { useChatSocket } from '../hooks/useChatSocket';
 
 const SUGGESTIONS = [
   'Summarize today\'s top story in Urdu',
@@ -17,19 +18,43 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
 
+  // Live chat socket — server keeps conversation memory per connection.
+  const { ready, lastMessage, send: wsSend } = useChatSocket();
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Append assistant replies that arrive over the WebSocket.
+  useEffect(() => {
+    if (!lastMessage) return;
+    const content = lastMessage.error
+      ? `Error: ${lastMessage.error}`
+      : lastMessage.answer;
+    setMessages((m) => [
+      ...m,
+      { role: 'assistant', content, sources: lastMessage.sources || [] },
+    ]);
+    setLoading(false);
+  }, [lastMessage]);
 
   const send = async (text) => {
     const question = (text ?? input).trim();
     if (!question || loading) return;
 
+    // History is only needed for the REST path — the socket keeps its own.
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
     setMessages((m) => [...m, { role: 'user', content: question }]);
     setInput('');
     setLoading(true);
 
+    // Preferred path: live WebSocket. The reply is handled by the effect above.
+    if (ready) {
+      wsSend({ question, language: 'ur' });
+      return;
+    }
+
+    // Fallback path: REST endpoint.
     try {
       const res = await newsService.ask({ question, history, language: 'ur' });
       setMessages((m) => [
@@ -39,7 +64,7 @@ export default function ChatPage() {
     } catch (err) {
       setMessages((m) => [
         ...m,
-        { role: 'assistant', content: `⚠️ ${err.message}`, sources: [] },
+        { role: 'assistant', content: `Error: ${err.message}`, sources: [] },
       ]);
     } finally {
       setLoading(false);
@@ -53,6 +78,20 @@ export default function ChatPage() {
         title="Ask AiKhbar"
         subtitle="A RAG-grounded news assistant. Answers are drawn from indexed coverage."
       />
+
+      {/* Connection status */}
+      <div className="mb-4 flex justify-end">
+        <span
+          className={`chip ${
+            ready ? 'text-emerald-300' : 'text-slate-400'
+          }`}
+        >
+          {ready ? <Wifi size={13} /> : <WifiOff size={13} />}
+          <span className="ml-1.5">
+            {ready ? 'Live connection' : 'Standard mode'}
+          </span>
+        </span>
+      </div>
 
       {/* Conversation */}
       <div className="glass min-h-[26rem] flex-1 space-y-4 p-6">
