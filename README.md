@@ -28,48 +28,9 @@ historical context, and lets users explore the news conversationally.
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    SRC["Urdu News Sources<br/>BBC Urdu, Daily Jang, Express, ARY, Hum Sub"]
-
-    subgraph Client["Frontend"]
-        UI["React, Vite and Redux<br/>Home, News, Story, Bulletin, Ask AiKhbar, About"]
-    end
-
-    subgraph Server["Backend (FastAPI)"]
-        API["REST API and WebSocket"]
-        SCHED["APScheduler"]
-        INGEST["Ingestion Pipeline<br/>scrape, classify, index, cluster"]
-        SUMM["Summarization and Daily Brief"]
-        RAG["RAG<br/>chat, opinions, timeline"]
-        TTS["Urdu TTS Service"]
-    end
-
-    subgraph AIML["AI and ML"]
-        NIM["NVIDIA NIM LLMs"]
-        EMB["SentenceTransformers Embeddings"]
-        ORATOR["Uplift AI Orator"]
-    end
-
-    subgraph DataLayer["Data Stores"]
-        PG[("PostgreSQL")]
-        VEC[("FAISS Vector Index")]
-        AUDIO[("Audio File Store")]
-    end
-
-    UI <-->|HTTP and WebSocket| API
-    API --> INGEST & SUMM & RAG & TTS
-    SCHED --> INGEST
-    INGEST -->|RSS| SRC
-    INGEST --> NIM & EMB
-    SUMM --> NIM
-    RAG --> NIM & EMB
-    TTS --> ORATOR
-    INGEST --> PG & VEC
-    SUMM --> PG
-    RAG --> PG & VEC
-    TTS --> AUDIO
-```
+<p align="center">
+  <img src="report/aikhbar_system_architecture.svg" alt="AiKhbar System Architecture" width="640" />
+</p>
 
 A clean-architecture separation is enforced: **API routes never contain AI
 logic**. They delegate to services in `app/services`, `app/rag`,
