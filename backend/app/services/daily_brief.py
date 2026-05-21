@@ -6,6 +6,7 @@ single narrated Urdu script and synthesises it to audio.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 
 from loguru import logger
@@ -137,12 +138,25 @@ async def generate_daily_brief(
     return brief
 
 
+# Cached audio-digest payload; rebuilt after settings.audio_digest_cache_hours.
+_digest_cache: dict | None = None
+
+
 async def generate_audio_digest(db: AsyncSession, max_stories: int = 6) -> dict:
     """Build a concise 2 to 3 minute Urdu audio bulletin of the top stories.
 
     Unlike per-story narration, this condenses the most important stories into
-    a single short script and synthesises one audio file.
+    a single short script and synthesises one audio file. The result is held
+    in memory for a few hours so repeated requests reuse the same audio.
     """
+    global _digest_cache
+    now = time.time()
+    ttl = settings.audio_digest_cache_hours * 3600
+    if _digest_cache and now - _digest_cache["created_at"] < ttl:
+        logger.info("Audio digest cache hit ({} min old)",
+                    int((now - _digest_cache["created_at"]) / 60))
+        return _digest_cache["payload"]
+
     clusters = await cluster_repository.top_clusters(db, limit=max_stories)
     if not clusters:
         return {"audio_url": None, "audio_provider": None,
@@ -174,11 +188,14 @@ async def generate_audio_digest(db: AsyncSession, max_stories: int = 6) -> dict:
     except Exception as exc:  # noqa: BLE001
         logger.warning("Audio digest TTS failed: {}", exc)
 
-    logger.info("Audio digest ready | stories={} | audio={}",
-                len(clusters), bool(audio_url))
-    return {
+    payload = {
         "audio_url": audio_url,
         "audio_provider": audio_provider,
         "narration_text": script,
         "story_count": len(clusters),
     }
+    if audio_url:
+        _digest_cache = {"created_at": now, "payload": payload}
+    logger.info("Audio digest ready | stories={} | audio={} | cached for {}h",
+                len(clusters), bool(audio_url), settings.audio_digest_cache_hours)
+    return payload

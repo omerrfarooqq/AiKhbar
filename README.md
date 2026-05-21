@@ -13,42 +13,66 @@ historical context, and lets users explore the news conversationally.
 
 | # | Feature | Description |
 |---|---------|-------------|
-| 1 | **News Ingestion** | Scheduled RSS scraping of BBC Urdu, Geo News & Daily Jang with full-text extraction and deduplication. |
+| 1 | **News Ingestion** | Scheduled RSS scraping of BBC Urdu, Daily Jang, Express, ARY and Hum Sub with full-text extraction, lead-image extraction and deduplication. |
 | 2 | **AI Classification** | Zero-shot classification into 7 categories (Politics, Sports, Economy, Crime, International, Technology, Entertainment). |
 | 3 | **Multi-Document Summarization** | Clusters articles about the same story and produces one unified Urdu summary at 4 depths. |
-| 4 | **Urdu Audio Briefings** | Podcast-style narration via Urdu Orator (primary) with a Coqui XTTS-v2 fallback. |
+| 4 | **Urdu Audio Briefings** | Podcast-style narration via Urdu Orator (Uplift AI) with a Coqui XTTS-v2 fallback. |
 | 5 | **RAG Opinion Aggregation** | Retrieves editorials/discussions and clusters viewpoints (public, political, expert, international). |
 | 6 | **Media Analysis Engine** | Detects tone, political leaning, sentiment and propaganda indicators. |
 | 7 | **Personalization** | Learns time-decayed category affinity from user interactions to rank a personalized feed. |
 | 8 | **Conversational News Chat** | RAG-grounded Q&A with conversational memory, over REST or WebSocket. |
 | 9 | **Timeline & Context** | Reconstructs a historical timeline of background events for major stories. |
-| 10 | **One-Click Daily Brief** | Top stories + summaries + opinions + a single Urdu audio narration. |
+| 10 | **One-Click Daily Brief** | Top stories, summaries, opinions, per-story audio and a 2 to 3 minute Urdu audio brief. |
 
 ---
 
 ## Architecture
 
-```
-┌─────────────┐   REST / WebSocket   ┌──────────────────────────────────┐
-│   Frontend  │ ───────────────────► │            FastAPI               │
-│ React+Vite  │                      │  ┌────────────────────────────┐  │
-│ Redux + FM  │ ◄─────────────────── │  │   API Routes (v1)          │  │
-└─────────────┘                      │  └────────────┬───────────────┘  │
-                                     │  ┌────────────▼───────────────┐  │
-                                     │  │   Service / AI Pipelines   │  │
-                                     │  │  scraping · classification │  │
-                                     │  │  summarization · RAG · TTS │  │
-                                     │  │  analytics · personalization│ │
-                                     │  └──┬──────────┬──────────┬───┘  │
-                                     └─────┼──────────┼──────────┼──────┘
-                                  ┌────────▼──┐  ┌────▼────┐  ┌──▼──────┐
-                                  │ PostgreSQL│  │  FAISS  │  │ NVIDIA  │
-                                  │           │  │  index  │  │  NIM    │
-                                  └───────────┘  └─────────┘  └─────────┘
+```mermaid
+flowchart TB
+    SRC["Urdu News Sources<br/>BBC Urdu, Daily Jang, Express, ARY, Hum Sub"]
+
+    subgraph Client["Frontend"]
+        UI["React, Vite and Redux<br/>Home, News, Story, Bulletin, Ask AiKhbar, About"]
+    end
+
+    subgraph Server["Backend (FastAPI)"]
+        API["REST API and WebSocket"]
+        SCHED["APScheduler"]
+        INGEST["Ingestion Pipeline<br/>scrape, classify, index, cluster"]
+        SUMM["Summarization and Daily Brief"]
+        RAG["RAG<br/>chat, opinions, timeline"]
+        TTS["Urdu TTS Service"]
+    end
+
+    subgraph AIML["AI and ML"]
+        NIM["NVIDIA NIM LLMs"]
+        EMB["SentenceTransformers Embeddings"]
+        ORATOR["Uplift AI Orator"]
+    end
+
+    subgraph DataLayer["Data Stores"]
+        PG[("PostgreSQL")]
+        VEC[("FAISS Vector Index")]
+        AUDIO[("Audio File Store")]
+    end
+
+    UI <-->|HTTP and WebSocket| API
+    API --> INGEST & SUMM & RAG & TTS
+    SCHED --> INGEST
+    INGEST -->|RSS| SRC
+    INGEST --> NIM & EMB
+    SUMM --> NIM
+    RAG --> NIM & EMB
+    TTS --> ORATOR
+    INGEST --> PG & VEC
+    SUMM --> PG
+    RAG --> PG & VEC
+    TTS --> AUDIO
 ```
 
 A clean-architecture separation is enforced: **API routes never contain AI
-logic** — they delegate to services in `app/services`, `app/rag`,
+logic**. They delegate to services in `app/services`, `app/rag`,
 `app/summarization`, `app/tts`, `app/classification`, `app/analytics` and
 `app/personalization`. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -67,7 +91,7 @@ httpx · BeautifulSoup · trafilatura · feedparser
 
 **Data** — PostgreSQL 16 · Redis (optional cache) · FAISS vector index
 
-**TTS** — Urdu Orator API (primary) · Coqui XTTS-v2 (open-source fallback)
+**TTS** — Urdu Orator API by Uplift AI (primary) · Coqui XTTS-v2 (open-source fallback)
 
 ---
 
@@ -130,7 +154,7 @@ cp .env.example .env          # then fill in NVIDIA_API_KEY etc.
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate         # Windows  (source .venv/bin/activate on Linux/Mac)
+.venv\Scripts\activate         
 pip install -r requirements/dev.txt
 
 # Run the API (auto-creates tables in dev mode)
@@ -174,6 +198,7 @@ See [`docs/SETUP.md`](docs/SETUP.md) for the full guide and
 | `POST` | `/api/v1/stories/{id}/opinions` | RAG opinion aggregation |
 | `POST` | `/api/v1/stories/{id}/timeline` | Build a historical timeline |
 | `POST` | `/api/v1/briefs/daily` | One-click daily brief |
+| `POST` | `/api/v1/briefs/audio-digest` | 2 to 3 minute Urdu audio brief |
 | `POST` | `/api/v1/chat` | Conversational news Q&A |
 | `POST` | `/api/v1/tts/synthesize` | Urdu text-to-speech |
 | `WS`   | `/ws/chat` | Live conversational chat |
@@ -185,8 +210,8 @@ Full reference: [`docs/API.md`](docs/API.md).
 ## Testing
 ```bash
 cd backend
-pytest                  # unit tests
-ruff check .            # lint
+pytest                  
+ruff check .            
 ```
 
 ---
@@ -204,5 +229,10 @@ See [`docs/ROADMAP.md`](docs/ROADMAP.md). Highlights:
 
 ## License
 
-Released for academic and educational use. See the project report in
-[`report/`](report/) for the full academic write-up.
+Released for academic and educational use. Not for commercial use without permission. See [`LICENSE`](LICENSE).
+
+
+## Author
+
+`Omer Farooq Khan` 
+- LinkedIn: <https://www.linkedin.com/in/omerrfarooqq/>

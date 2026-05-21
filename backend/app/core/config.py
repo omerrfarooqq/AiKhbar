@@ -70,6 +70,8 @@ class Settings(BaseSettings):
     urdu_orator_output_format: str = "MP3_22050_128"
     coqui_model: str = "tts_models/multilingual/multi-dataset/xtts_v2"
     audio_cache_dir: str = "./storage/audio"
+    # Hours the generated 2-3 minute audio brief is reused before rebuilding.
+    audio_digest_cache_hours: int = 3
 
     # --- Scraping ---
     scraper_user_agent: str = "AiKhbarBot/1.0"
