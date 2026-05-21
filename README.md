@@ -1,7 +1,7 @@
 # AiKhbar // اے آئی خبر
 
 > An Urdu AI-powered **news intelligence and audio briefing platform**.
-> Not just a news app — an AI media intelligence system.
+
 
 AiKhbar aggregates real-time Urdu news, summarizes it with LLMs, generates
 natural Urdu audio briefings, aggregates opinions through RAG, reconstructs
