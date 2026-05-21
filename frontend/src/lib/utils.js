@@ -18,14 +18,14 @@ export function formatDate(iso) {
   });
 }
 
-/** Human label + accent colour for a category key. */
+/** Human label + accent colour for a category key (tuned for light chips). */
 export const CATEGORY_META = {
-  politics: { label: 'Politics', color: 'text-rose-300' },
-  sports: { label: 'Sports', color: 'text-emerald-300' },
-  economy: { label: 'Economy', color: 'text-amber-300' },
-  crime: { label: 'Crime', color: 'text-red-300' },
-  international: { label: 'International', color: 'text-sky-300' },
-  technology: { label: 'Technology', color: 'text-violet-300' },
-  entertainment: { label: 'Entertainment', color: 'text-pink-300' },
-  general: { label: 'General', color: 'text-slate-300' },
+  politics: { label: 'Politics', color: 'text-rose-600' },
+  sports: { label: 'Sports', color: 'text-emerald-600' },
+  economy: { label: 'Economy', color: 'text-amber-600' },
+  crime: { label: 'Crime', color: 'text-red-600' },
+  international: { label: 'International', color: 'text-sky-700' },
+  technology: { label: 'Technology', color: 'text-violet-600' },
+  entertainment: { label: 'Entertainment', color: 'text-pink-600' },
+  general: { label: 'General', color: 'text-steel-500' },
 };

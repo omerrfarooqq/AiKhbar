@@ -1,12 +1,13 @@
 """RSS-based scraper.
 
-Parses configured RSS feeds, fetches full article bodies and yields
-ArticleCreate schemas ready for persistence. Network I/O is concurrent
-but politely bounded by a semaphore.
+Parses configured RSS feeds, fetches full article bodies and lead images,
+and yields ArticleCreate schemas ready for persistence. Network I/O is
+concurrent but politely bounded by a semaphore.
 """
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime, timezone
 from time import mktime
 
@@ -15,13 +16,14 @@ import httpx
 from loguru import logger
 
 from app.core.config import settings
-from app.scraping.extractor import fetch_article_body
+from app.scraping.extractor import fetch_article
 from app.scraping.hashing import content_hash
 from app.scraping.sources import NewsSource, all_sources
 from app.schemas.article import ArticleCreate
 
 # Politeness: cap concurrent article fetches per scrape run.
 _FETCH_CONCURRENCY = 8
+_IMG_IN_HTML = re.compile(r'<img[^>]+src="([^"]+)"', re.IGNORECASE)
 
 
 def _parse_published(entry) -> datetime | None:  # noqa: ANN001
@@ -33,6 +35,25 @@ def _parse_published(entry) -> datetime | None:  # noqa: ANN001
     return None
 
 
+def _feed_image(entry) -> str | None:  # noqa: ANN001
+    """Best-effort lead image from the common RSS media fields."""
+    media = getattr(entry, "media_thumbnail", None) or getattr(
+        entry, "media_content", None
+    )
+    if media:
+        for item in media:
+            if item.get("url"):
+                return item["url"]
+    for link in getattr(entry, "links", []) or []:
+        if link.get("rel") == "enclosure" and str(
+            link.get("type", "")
+        ).startswith("image/"):
+            return link.get("href")
+    # Some feeds embed the image only inside the summary/content HTML.
+    match = _IMG_IN_HTML.search(getattr(entry, "summary", "") or "")
+    return match.group(1) if match else None
+
+
 async def _scrape_feed(
     source: NewsSource,
     feed_url: str,
@@ -40,7 +61,7 @@ async def _scrape_feed(
     client: httpx.AsyncClient,
     sem: asyncio.Semaphore,
 ) -> list[ArticleCreate]:
-    """Parse one feed and fetch bodies for its entries."""
+    """Parse one feed and fetch bodies + images for its entries."""
     # feedparser is blocking — run it off the event loop.
     feed = await asyncio.to_thread(feedparser.parse, feed_url)
     entries = feed.entries[: settings.scrape_max_articles_per_source]
@@ -52,7 +73,7 @@ async def _scrape_feed(
         if not url or not headline:
             return None
         async with sem:
-            body = await fetch_article_body(url, client)
+            body, page_image = await fetch_article(url, client)
         if not body or len(body) < 150:
             # Fall back to the RSS summary if body extraction was too thin.
             body = getattr(entry, "summary", "") or body or ""
@@ -62,6 +83,7 @@ async def _scrape_feed(
             headline=headline.strip(),
             body=body,
             url=url,
+            image_url=_feed_image(entry) or page_image,
             source=source.key,
             author=getattr(entry, "author", None),
             published_at=_parse_published(entry),

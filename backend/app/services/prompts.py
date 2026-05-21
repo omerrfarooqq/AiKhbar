@@ -149,3 +149,26 @@ def chat_user(question: str, context: str, language: str) -> str:
         f"=== RETRIEVED CONTEXT ===\n{context}\n=== END CONTEXT ===\n\n"
         f"User question: {question}"
     )
+
+
+# --------------------------------------------------------------------------
+# Audio news digest (2-3 minute bulletin)
+# --------------------------------------------------------------------------
+
+DIGEST_SYSTEM = (
+    "You are an Urdu radio news anchor. You write tight, spoken-style news "
+    "bulletins that sound natural read aloud. Never invent facts; use only the "
+    "stories provided."
+)
+
+
+def digest_user(story_summaries: list[str]) -> str:
+    joined = "\n\n".join(f"- {s}" for s in story_summaries)
+    return (
+        "Write a single cohesive Urdu news bulletin of about 300-380 words, "
+        "suitable for a 2 to 3 minute audio segment. Begin with a short "
+        "greeting, cover each story below in 2-3 clear sentences in order of "
+        "importance, and end with a brief sign-off. Output ONLY the Urdu "
+        "bulletin script, with no headings or labels.\n\n"
+        f"=== TODAY'S STORIES ===\n{joined}\n=== END ==="
+    )

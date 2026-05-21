@@ -4,15 +4,27 @@ All settings are loaded from environment variables (.env) via pydantic-settings.
 This is the single source of truth for runtime configuration.
 """
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, computed_field
+from pydantic import computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve the .env location independently of the current working directory, so
+# the backend loads the same config whether it is started from the repo root or
+# from the backend/ directory. A repo-root .env takes priority over a
+# backend-local one. In containers, real environment variables still win.
+_CONFIG_FILE = Path(__file__).resolve()
+_BACKEND_DIR = _CONFIG_FILE.parents[2]
+_PROJECT_ROOT = _CONFIG_FILE.parents[3]
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore", case_sensitive=False
+        env_file=(_BACKEND_DIR / ".env", _PROJECT_ROOT / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
     )
 
     # --- Application ---
@@ -50,9 +62,12 @@ class Settings(BaseSettings):
     faiss_meta_path: str = "./storage/faiss/aikhbar_meta.json"
 
     # --- TTS ---
+    # "Urdu Orator" is Uplift AI's Orator model for Pakistani-language speech.
     tts_primary: Literal["urdu_orator", "coqui"] = "urdu_orator"
     urdu_orator_api_key: str = ""
-    urdu_orator_base_url: str = "https://api.urduorator.com/v1"
+    urdu_orator_base_url: str = "https://api.upliftai.org/v1"
+    urdu_orator_voice_id: str = "v_30s70t3a"
+    urdu_orator_output_format: str = "MP3_22050_128"
     coqui_model: str = "tts_models/multilingual/multi-dataset/xtts_v2"
     audio_cache_dir: str = "./storage/audio"
 

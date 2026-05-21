@@ -32,6 +32,9 @@ export const newsService = {
   generateDailyBrief: (body) =>
     apiClient.post('/briefs/daily', body).then((r) => r.data),
 
+  audioDigest: () =>
+    apiClient.post('/briefs/audio-digest').then((r) => r.data),
+
   ask: (body) => apiClient.post('/chat', body).then((r) => r.data),
 
   synthesize: (body) =>

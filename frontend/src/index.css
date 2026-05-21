@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -14,64 +14,70 @@
   }
 
   body {
-    @apply bg-ink-950 text-slate-200 font-sans antialiased;
-    background-image:
-      radial-gradient(circle at 15% -10%, rgba(212, 172, 77, 0.12), transparent 45%),
-      radial-gradient(circle at 90% 0%, rgba(91, 141, 239, 0.1), transparent 40%);
-    background-attachment: fixed;
+    @apply bg-cream-100 text-ink-800 font-sans antialiased;
   }
 
-  /* Urdu content renders right-to-left in the Nastaliq face. */
+  /* Urdu content renders right-to-left in the Naskh face. */
   .urdu {
     @apply font-urdu;
     direction: rtl;
-    line-height: 2.4;
+    line-height: 2;
   }
 
   ::-webkit-scrollbar {
-    width: 9px;
+    width: 11px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-ink-900;
+    @apply bg-cream-100;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-ink-700 rounded-full;
+    @apply rounded-full border-2 border-cream-100 bg-steel-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-steel-400;
+  }
+
+  ::selection {
+    @apply bg-ocean-500/20 text-ink-900;
   }
 }
 
 @layer components {
-  /* Reusable glassmorphism surface. */
+  /* Light frosted-glass surface. */
   .glass {
-    @apply bg-glass-gradient backdrop-blur-xl border border-white/10
-           shadow-glass rounded-2xl;
+    @apply rounded-2xl border border-white/80 bg-glass-gradient
+           shadow-soft backdrop-blur-xl;
   }
 
   .glass-hover {
-    @apply transition-all duration-300 hover:border-gold-500/40
-           hover:shadow-glow;
+    @apply transition-all duration-300 hover:border-ocean-300
+           hover:shadow-lift;
   }
 
-  .gold-text {
-    @apply bg-gradient-to-r from-gold-300 via-gold-400 to-gold-500
+  /* Ocean-gradient brand text. */
+  .brand-text {
+    @apply bg-gradient-to-r from-ocean-600 via-ocean-500 to-ocean-400
            bg-clip-text text-transparent;
   }
 
+  /* Editorial newsroom buttons: rectangular, uppercase, letter-spaced. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl
-           bg-gradient-to-r from-gold-500 to-gold-600 px-6 py-3
-           font-semibold text-ink-950 transition-all duration-300
-           hover:shadow-glow hover:brightness-110 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-none
+           bg-ink-900 px-7 py-3.5 text-xs font-bold uppercase
+           tracking-[0.18em] text-white transition-colors duration-300
+           hover:bg-ocean-700 disabled:opacity-50;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl
-           border border-white/15 px-5 py-2.5 font-medium text-slate-200
-           transition-all duration-300 hover:border-gold-500/40
-           hover:bg-white/5;
+    @apply inline-flex items-center justify-center gap-2 rounded-none
+           border border-ink-900 bg-transparent px-7 py-3.5 text-xs
+           font-bold uppercase tracking-[0.18em] text-ink-800
+           transition-colors duration-300 hover:bg-ink-900 hover:text-white
+           disabled:opacity-50;
   }
 
   .chip {
-    @apply inline-flex items-center rounded-full border border-white/10
-           bg-white/5 px-3 py-1 text-xs font-medium text-slate-300;
+    @apply inline-flex items-center rounded-full border border-steel-200
+           bg-white/70 px-3 py-1 text-xs font-medium text-steel-600;
   }
 }

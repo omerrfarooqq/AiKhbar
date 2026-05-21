@@ -26,21 +26,22 @@ export default function AudioPlayer({ src, title = 'Urdu Audio Briefing' }) {
       <button
         onClick={toggle}
         className="flex h-12 w-12 shrink-0 items-center justify-center
-                   rounded-full bg-gradient-to-r from-gold-500 to-gold-600
-                   text-ink-950 transition hover:shadow-glow"
+                   rounded-full bg-gradient-to-r from-ocean-500 to-ocean-600
+                   text-white shadow-soft transition hover:shadow-glow"
         aria-label={playing ? 'Pause' : 'Play'}
       >
         {playing ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
       </button>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 text-sm text-slate-300">
-          <Volume2 size={14} className="text-gold-400" />
+        <div className="flex items-center gap-2 text-sm text-ink-700">
+          <Volume2 size={14} className="text-ocean-500" />
           <span className="truncate">{title}</span>
         </div>
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full
+                        bg-steel-200">
           <motion.div
-            className="h-full bg-gradient-to-r from-gold-400 to-gold-600"
+            className="h-full bg-gradient-to-r from-ocean-400 to-ocean-600"
             style={{ width: `${progress}%` }}
           />
         </div>

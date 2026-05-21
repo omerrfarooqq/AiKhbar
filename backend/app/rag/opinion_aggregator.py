@@ -11,6 +11,7 @@ from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import NotFoundError
 from app.models.cluster import StoryCluster
 from app.models.opinion import Opinion
@@ -46,6 +47,8 @@ async def aggregate_opinions(
     data = await llm.complete_json(
         system=prompts.OPINION_SYSTEM,
         user=prompts.opinion_user(cluster.title, context),
+        # Fast model keeps the brief within the free-tier rate limit.
+        model=settings.nvidia_llm_model_fast,
     )
 
     # Replace any stale opinions for this cluster.

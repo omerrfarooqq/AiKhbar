@@ -11,12 +11,14 @@ from dataclasses import dataclass, field
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.constants import NarrationMode
+from app.core.config import settings
+from app.core.constants import BriefMode, NarrationMode
 from app.models.user import User
 from app.personalization.engine import personalized_feed
 from app.rag.opinion_aggregator import aggregate_opinions
 from app.schemas.story import DailyBriefRequest
-from app.services import cluster_repository
+from app.services import cluster_repository, prompts
+from app.services.nvidia_client import get_llm_client
 from app.summarization.summarizer import summarize_cluster
 from app.tts.narration import build_narration, emphasize_headline
 from app.tts.service import get_tts_service
@@ -133,3 +135,50 @@ async def generate_daily_brief(
     logger.info("Daily brief ready | stories={} | audio={}",
                 len(brief.stories), bool(brief.audio_url))
     return brief
+
+
+async def generate_audio_digest(db: AsyncSession, max_stories: int = 6) -> dict:
+    """Build a concise 2 to 3 minute Urdu audio bulletin of the top stories.
+
+    Unlike per-story narration, this condenses the most important stories into
+    a single short script and synthesises one audio file.
+    """
+    clusters = await cluster_repository.top_clusters(db, limit=max_stories)
+    if not clusters:
+        return {"audio_url": None, "audio_provider": None,
+                "narration_text": "", "story_count": 0}
+
+    summaries: list[str] = []
+    for cluster in clusters:
+        summary = await summarize_cluster(db, cluster.id, mode=BriefMode.SHORT)
+        summaries.append(f"{cluster.title}\n{summary.content}")
+    await db.flush()
+
+    llm = get_llm_client()
+    script = await llm.complete(
+        system=prompts.DIGEST_SYSTEM,
+        user=prompts.digest_user(summaries),
+        model=settings.nvidia_llm_model_fast,
+        temperature=0.3,
+        max_tokens=900,
+    )
+
+    audio_url: str | None = None
+    audio_provider: str | None = None
+    try:
+        audio = await get_tts_service().synthesize(
+            script, narration_mode=NarrationMode.PODCAST
+        )
+        audio_url = audio.audio_url
+        audio_provider = audio.provider
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Audio digest TTS failed: {}", exc)
+
+    logger.info("Audio digest ready | stories={} | audio={}",
+                len(clusters), bool(audio_url))
+    return {
+        "audio_url": audio_url,
+        "audio_provider": audio_provider,
+        "narration_text": script,
+        "story_count": len(clusters),
+    }

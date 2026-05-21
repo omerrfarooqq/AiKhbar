@@ -5,12 +5,12 @@ export default function Loader({ label = 'Loading…' }) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16">
       <motion.div
-        className="h-12 w-12 rounded-full border-2 border-white/10
-                   border-t-gold-500"
+        className="h-12 w-12 rounded-full border-2 border-steel-200
+                   border-t-ocean-500"
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
       />
-      <p className="text-sm text-slate-400">{label}</p>
+      <p className="text-sm text-steel-500">{label}</p>
     </div>
   );
 }

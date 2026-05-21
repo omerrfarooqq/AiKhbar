@@ -50,11 +50,11 @@ export default function NewsPage() {
 
       {status === 'loading' && <Loader label="Fetching news…" />}
       {status === 'failed' && (
-        <p className="text-rose-300">Could not load news: {error}</p>
+        <p className="text-rose-600">Could not load news: {error}</p>
       )}
 
       {status === 'succeeded' && articles.length === 0 && (
-        <p className="text-slate-400">
+        <p className="text-steel-500">
           No articles yet. Trigger an ingestion run from the backend.
         </p>
       )}
@@ -73,11 +73,12 @@ function FilterChip({ label, active, onClick }) {
     <motion.button
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-all
-        ${
+      className={`rounded-none border px-4 py-1.5 text-sm font-medium
+        transition-all ${
           active
-            ? 'border-gold-500/60 bg-gold-500/15 text-gold-300'
-            : 'border-white/10 text-slate-400 hover:border-white/25 hover:text-slate-200'
+            ? 'border-ocean-500 bg-ocean-500 text-white shadow-soft'
+            : 'border-steel-200 bg-white/60 text-steel-500 ' +
+              'hover:border-ocean-300 hover:text-ocean-600'
         }`}
     >
       {label}

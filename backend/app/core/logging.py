@@ -30,6 +30,15 @@ class _InterceptHandler(logging.Handler):
 
 def configure_logging() -> None:
     """Initialise logging sinks and intercept stdlib loggers."""
+    # Ensure console output can render non-ASCII (Urdu) text. The default
+    # Windows console codepage (cp1252) otherwise raises UnicodeEncodeError.
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            try:
+                _stream.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):  # pragma: no cover - stream not seekable
+                pass
+
     logger.remove()
 
     if settings.log_json:

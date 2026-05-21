@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.constants import BriefMode
 from app.core.exceptions import NotFoundError
 from app.models.cluster import StoryCluster
@@ -63,9 +64,13 @@ async def summarize_cluster(
 
     llm = get_llm_client()
     sources = _assemble_sources(cluster)
+    # The fast 8B model is used so the daily brief's burst of summary calls
+    # stays within the NVIDIA free-tier rate limit; the 70B model 429s hard.
+    model = settings.nvidia_llm_model_fast
     content = await llm.complete(
         system=prompts.SUMMARIZE_SYSTEM,
         user=prompts.summarize_user(mode, sources),
+        model=model,
         temperature=0.3,
         max_tokens=2500 if mode == BriefMode.DEEP_DIVE else 1200,
     )
@@ -75,7 +80,7 @@ async def summarize_cluster(
         mode=mode.value,
         language=language,
         content=content,
-        model=get_llm_client_model_name(),
+        model=model,
     )
     db.add(summary)
 
@@ -86,9 +91,3 @@ async def summarize_cluster(
     await db.flush()
     logger.info("Generated {} summary for cluster {}", mode.value, cluster_id)
     return summary
-
-
-def get_llm_client_model_name() -> str:
-    from app.core.config import settings
-
-    return settings.nvidia_llm_model

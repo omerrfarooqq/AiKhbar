@@ -9,6 +9,7 @@ from app.core.constants import Category
 class ArticleBase(BaseModel):
     headline: str
     url: str
+    image_url: str | None = None
     source: str
     author: str | None = None
     published_at: datetime | None = None
@@ -43,8 +44,11 @@ class ArticleSummaryCard(BaseModel):
 
     id: str
     headline: str
+    url: str
+    image_url: str | None = None
     source: str
     category: str
     region: str | None = None
     published_at: datetime | None = None
+    cluster_id: str | None = None
     tags: list[str] = Field(default_factory=list)

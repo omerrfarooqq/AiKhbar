@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Layers, ArrowUpRight } from 'lucide-react';
 import CategoryBadge from './CategoryBadge';
 
-/** A clustered story card — multiple sources, one unified summary. */
+/** A clustered story card with multiple sources and one unified summary. */
 export default function StoryCard({ story, delay = 0 }) {
   return (
     <motion.div
@@ -16,18 +16,18 @@ export default function StoryCard({ story, delay = 0 }) {
     >
       <div className="flex items-center justify-between">
         <CategoryBadge category={story.category} />
-        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+        <span className="flex items-center gap-1.5 text-xs text-steel-400">
           <Layers size={13} />
           {story.article_count} sources
         </span>
       </div>
 
-      <h3 className="urdu mt-4 text-xl text-slate-100 line-clamp-2">
+      <h3 className="urdu mt-4 text-xl text-ink-900 line-clamp-2">
         {story.title}
       </h3>
 
       {story.unified_summary && (
-        <p className="urdu mt-3 text-sm text-slate-400 line-clamp-3">
+        <p className="urdu mt-3 text-sm text-steel-500 line-clamp-3">
           {story.unified_summary}
         </p>
       )}
@@ -35,7 +35,7 @@ export default function StoryCard({ story, delay = 0 }) {
       <Link
         to={`/story/${story.id}`}
         className="mt-auto inline-flex items-center gap-1 pt-5 text-sm
-                   font-semibold text-gold-400 hover:text-gold-300"
+                   font-semibold text-ocean-600 hover:text-ocean-500"
       >
         Open story <ArrowUpRight size={15} />
       </Link>

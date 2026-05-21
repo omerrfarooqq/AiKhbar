@@ -2,7 +2,7 @@
 
 Each source is RSS-first (reliable, low-load, ToS-friendly). The full article
 body is then fetched and extracted from the article URL with trafilatura.
-Category hints from the feed are advisory only — the AI classifier has the
+Category hints from the feed are advisory only; the AI classifier has the
 final say.
 """
 from dataclasses import dataclass, field
@@ -32,15 +32,12 @@ SOURCES: dict[str, NewsSource] = {
             "https://feeds.bbci.co.uk/urdu/science/rss.xml": Category.TECHNOLOGY,
         },
     ),
-    "geo_urdu": NewsSource(
-        key="geo_urdu",
-        name="Geo News Urdu",
+    "humsub": NewsSource(
+        key="humsub",
+        name="Hum Sub",
         language="ur",
         feeds={
-            "https://urdu.geo.tv/rss/1/1": Category.GENERAL,
-            "https://urdu.geo.tv/rss/1/53": Category.POLITICS,
-            "https://urdu.geo.tv/rss/1/57": Category.SPORTS,
-            "https://urdu.geo.tv/rss/1/55": Category.INTERNATIONAL,
+            "https://www.humsub.com.pk/feed/": Category.GENERAL,
         },
     ),
     "jang": NewsSource(
@@ -49,6 +46,25 @@ SOURCES: dict[str, NewsSource] = {
         language="ur",
         feeds={
             "https://jang.com.pk/rss/1/0": Category.GENERAL,
+            "https://jang.com.pk/rss/1/7": Category.GENERAL,
+            "https://jang.com.pk/rss/1/78": Category.GENERAL,
+            "https://jang.com.pk/rss/1/79": Category.GENERAL,
+        },
+    ),
+    "express_urdu": NewsSource(
+        key="express_urdu",
+        name="Express News Urdu",
+        language="ur",
+        feeds={
+            "https://www.express.pk/feed/": Category.GENERAL,
+        },
+    ),
+    "ary_urdu": NewsSource(
+        key="ary_urdu",
+        name="ARY News Urdu",
+        language="ur",
+        feeds={
+            "https://urdu.arynews.tv/feed/": Category.GENERAL,
         },
     ),
 }

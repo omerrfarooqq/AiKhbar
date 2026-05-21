@@ -51,7 +51,7 @@ export default function StoryDetailPage() {
 
   if (loading) return <Loader label="Loading story…" />;
   if (error)
-    return <p className="mx-auto max-w-3xl px-6 py-20 text-rose-300">{error}</p>;
+    return <p className="mx-auto max-w-3xl px-6 py-20 text-rose-600">{error}</p>;
   if (!story) return null;
 
   return (
@@ -59,11 +59,11 @@ export default function StoryDetailPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3">
           <CategoryBadge category={story.category} />
-          <span className="flex items-center gap-1.5 text-xs text-slate-500">
+          <span className="flex items-center gap-1.5 text-xs text-steel-400">
             <Layers size={13} /> {story.article_count} sources
           </span>
         </div>
-        <h1 className="urdu mt-4 font-display text-3xl text-slate-100 md:text-4xl">
+        <h1 className="urdu mt-4 font-display text-3xl text-ink-900 md:text-4xl">
           {story.title}
         </h1>
       </motion.div>
@@ -98,14 +98,14 @@ export default function StoryDetailPage() {
 
       {audioUrl && (
         <div className="mt-6">
-          <AudioPlayer src={audioUrl} title="Story — Urdu Narration" />
+          <AudioPlayer src={audioUrl} title="Story Urdu Narration" />
         </div>
       )}
 
       {/* Unified summary */}
       <GlassCard className="mt-8" hover={false}>
         <SectionHeading eyebrow="Summary" title="Unified Story" />
-        <p className="urdu text-slate-300">
+        <p className="urdu text-ink-800">
           {story.summaries?.[0]?.content ||
             story.unified_summary ||
             'No summary generated yet.'}
@@ -118,14 +118,17 @@ export default function StoryDetailPage() {
           <SectionHeading eyebrow="RAG" title="Perspectives" />
           <div className="space-y-3">
             {story.opinions.map((op) => (
-              <div key={op.id} className="rounded-xl bg-white/5 p-4">
-                <span className="text-sm font-semibold text-gold-300">
+              <div
+                key={op.id}
+                className="rounded-xl border border-steel-200 bg-white/60 p-4"
+              >
+                <span className="text-sm font-semibold text-ocean-700">
                   {op.perspective}
                   {op.stance && (
-                    <span className="ml-2 text-slate-400">· {op.stance}</span>
+                    <span className="ml-2 text-steel-500">· {op.stance}</span>
                   )}
                 </span>
-                <p className="urdu mt-2 text-sm text-slate-300">{op.summary}</p>
+                <p className="urdu mt-2 text-sm text-ink-700">{op.summary}</p>
               </div>
             ))}
           </div>
@@ -136,18 +139,17 @@ export default function StoryDetailPage() {
       {story.timeline_events?.length > 0 && (
         <GlassCard className="mt-6" hover={false}>
           <SectionHeading eyebrow="Context" title="Historical Timeline" />
-          <div className="relative space-y-6 border-l border-white/10 pl-6">
+          <div className="relative space-y-6 border-l border-steel-200 pl-6">
             {story.timeline_events.map((ev) => (
               <div key={ev.id} className="relative">
-                <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full
-                                 bg-gold-500" />
-                <span className="text-xs font-semibold text-gold-400">
+                <span className="absolute -left-[31px] top-1 h-3 w-3
+                                 rounded-full bg-ocean-500 ring-4
+                                 ring-ocean-500/15" />
+                <span className="text-xs font-semibold text-ocean-600">
                   {ev.date_label || 'Earlier'}
                 </span>
-                <h4 className="mt-1 font-semibold text-slate-100">
-                  {ev.title}
-                </h4>
-                <p className="urdu mt-1 text-sm text-slate-400">
+                <h4 className="mt-1 font-semibold text-ink-900">{ev.title}</h4>
+                <p className="urdu mt-1 text-sm text-steel-500">
                   {ev.description}
                 </p>
               </div>

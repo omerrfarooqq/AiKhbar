@@ -5,6 +5,7 @@ import NewsPage from './pages/NewsPage';
 import StoryDetailPage from './pages/StoryDetailPage';
 import DailyBriefPage from './pages/DailyBriefPage';
 import ChatPage from './pages/ChatPage';
+import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 /** Application route table. */
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="story/:id" element={<StoryDetailPage />} />
         <Route path="brief" element={<DailyBriefPage />} />
         <Route path="chat" element={<ChatPage />} />
+        <Route path="about" element={<AboutPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

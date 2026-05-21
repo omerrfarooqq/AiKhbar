@@ -11,6 +11,7 @@ from __future__ import annotations
 from loguru import logger
 
 from app.classification.schemas import ClassificationResult
+from app.core.config import settings
 from app.core.constants import Category
 from app.services import prompts
 from app.services.nvidia_client import get_llm_client
@@ -31,8 +32,9 @@ async def classify_article(headline: str, body: str) -> ClassificationResult:
         data = await llm.complete_json(
             system=prompts.CLASSIFY_SYSTEM,
             user=prompts.classify_user(headline, body),
-            # Fast model is enough for classification — saves cost/latency.
-            model=None,
+            # The fast 8B model is enough for classification and has far more
+            # headroom on the NVIDIA free-tier rate limit than the 70B model.
+            model=settings.nvidia_llm_model_fast,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Classification failed, defaulting to GENERAL: {}", exc)

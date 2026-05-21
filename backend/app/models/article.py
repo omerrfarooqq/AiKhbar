@@ -33,6 +33,7 @@ class Article(Base, TimestampMixin):
     headline: Mapped[str] = mapped_column(String(512), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     url: Mapped[str] = mapped_column(String(1024), unique=True, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(1024))
 
     # --- Provenance ---
     source: Mapped[str] = mapped_column(String(64), nullable=False)

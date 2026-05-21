@@ -1,7 +1,9 @@
 """Urdu Orator TTS provider (primary).
 
-Talks to the Urdu Orator HTTP API. The exact request shape is centralised here
-so that, if the upstream contract changes, only this file needs updating.
+Wraps the Uplift AI Orator REST API, which synthesises Pakistani-language
+(Urdu) speech. The 'sk_api_...' developer key authenticates as a bearer token.
+The request shape is centralised here so upstream contract changes touch only
+this file.
 """
 from __future__ import annotations
 
@@ -15,34 +17,22 @@ from app.core.constants import NarrationMode
 from app.core.exceptions import ConfigurationError, ExternalServiceError
 from app.tts.base import TTSProvider
 
-# Maps our narration modes to Urdu Orator style identifiers.
-_STYLE_MAP = {
-    NarrationMode.NEUTRAL: "news",
-    NarrationMode.PODCAST: "conversational",
-    NarrationMode.HEADLINE: "announcement",
-}
-
 
 class UrduOratorProvider(TTSProvider):
+    """Uplift AI Orator text-to-speech."""
+
     name = "urdu_orator"
 
     def __init__(self) -> None:
         self._base_url = settings.urdu_orator_base_url.rstrip("/")
         self._api_key = settings.urdu_orator_api_key
+        self._voice_id = settings.urdu_orator_voice_id
+        self._output_format = settings.urdu_orator_output_format
 
     async def is_available(self) -> bool:
-        if not self._api_key:
-            return False
-        try:
-            async with httpx.AsyncClient(timeout=8) as client:
-                resp = await client.get(
-                    f"{self._base_url}/health",
-                    headers={"Authorization": f"Bearer {self._api_key}"},
-                )
-            return resp.status_code == 200
-        except httpx.HTTPError as exc:
-            logger.warning("Urdu Orator health check failed: {}", exc)
-            return False
+        # A configured key is sufficient; transient API failures are handled
+        # by the fallback at synthesis time rather than probed here.
+        return bool(self._api_key)
 
     async def synthesize(
         self,
@@ -55,16 +45,14 @@ class UrduOratorProvider(TTSProvider):
             raise ConfigurationError("URDU_ORATOR_API_KEY is not set")
 
         payload = {
+            "voiceId": voice or self._voice_id,
             "text": text,
-            "language": "ur",
-            "style": _STYLE_MAP.get(narration_mode, "news"),
-            "voice": voice or "default",
-            "format": "mp3",
+            "outputFormat": self._output_format,
         }
         try:
             async with httpx.AsyncClient(timeout=120) as client:
                 resp = await client.post(
-                    f"{self._base_url}/tts",
+                    f"{self._base_url}/synthesis/text-to-speech",
                     headers={"Authorization": f"Bearer {self._api_key}"},
                     json=payload,
                 )
